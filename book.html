@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Egine Adventure</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="css/prism.css"/>
+    <script src="js/prism.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html"> Game Engine Adventure</a>
+        </nav>
+        <div>
+            <ul>
+                <li><a>Inicio</a></li>
+                <li><a>Mapa</a></li>
+                <li><a>Livros</a></li>
+                <li><a>Ferramentas</a></li>
+                <li><a>Sobre</a></li>
+            </ul>
+            <button>Light</button>
+        </div>
+    </header>
+    
+    <h1>Capitulo X - Physically Based Rendering, um mergulho profundo</h1>
+    <p>
+        Physically Based Rendering, normalmente representado com a sigla PBR, em português, renderização baseada em física é uma forma de
+        renderizar objetos, onde usamos parâmetros fisicos para descrever os materiais de cada objeto. O que significa que, dado uma
+        propriedade fisica do objeto, como por exemplo a rugosidade da superfície, tentaremos aproximar a renderização desse objeto para que
+        sua iluminação se pareça com um objeto do mundo real com as mesmas propriedades físicas. Por exemplo, se olharmos para a imagem 1,
+        podemos ver esferas 3D renderizadas com valores de rugosidade de 0 a 1, da esqueda para direita. Objetos mais rugosos espalham mais
+        a luz enquanto objetos menos rugosos refletem a luz de forma mais "concentrada" gerando areas de brilho. Uma renderização baseada em
+        fisica não significa simularemos a luz perfeitamente como no mundo real, apenas usaremos parametros fisicos para tentar aproximar
+        a iluminação de nossos objetos 3D de objetos do mundo real.
+    </p>
+
+    <figure class="image-container">
+        <img src="img/Graphs/dielectric_roughness.png" alt="">
+        <figcaption>Figura 1 - Variação da iluminação ao variar a rugosidade de 0 até 1</figcaption>
+    </figure>
+
+    <p>
+        Existem muitos bons recursos sobre renderização PBR, como o livro Physically Based Rendering:From Theory To Implementation
+        escrito por Matt Pharr, Wenzel Jakob, and Greg Humphreys, o livro Learn Opengl, que tambem possui um site no dominio
+        https://learnopengl.com (com um pouco mais de conteudo, devido a artigos publicados no mesmo) escrito por Joey de Vries e os
+        livros 3D Graphics Rendering Cookbook: A comprehensive guide to exploring rendering algorithms in modern OpenGL and Vulkan e
+        Vulkan 3D Graphics Rendering Cookbook - Second Edition: Implement expert-level techniques for high-performance graphics with Vulkan
+        ambos escritos por Sergey Kosarevsky, Alexey Medvedev e Viktor Latypov. Todos são recursos incriveis, que me ajudaram a implementar
+        renderizadores de boa qualidade, tanto em Vulkan, OpenGL e em em software através de Ray Tracing. O grande problema é eu não entendi
+        o que eu fiz. Os conceitos basicos eram muito claros, mas derrepente, acontece um salto, onde uma matematica magica e misteriosa
+        fazem os conceitos funcionarem.
+    </p>
+
+    <p>
+        Um exemplo disso, foi relacionado ao primeiro conceito fisico citado nesse capitulo, a rugosidade. A teoria nos mostra que materiais
+        rugosos dispersam melhor a luz, enquanto os menos rugosos refletem a luz de forma mais concentrada, como pode ser visto na figura
+        2. Objetos com uma superficie completamente lisa, iram refletir os raios de luz todos juntos, perfeitamente em relação a normal
+        da superficie. A medida que a rugosidade da superficie aumenta, os raios de luz se espalham mais. Conceitualmente isso é muito simples
+        mas quando leio qualquer um desses livros, tenho até dificuldade de encontrar onde isso é feito no codigo. Quando li o learnopengl, eu
+        via formulas no inicio do capitulo, e no restante, implementações de partes dessas formulas, sem nenhum aprofundamento de como esses
+        trechos de codigo fazem tudo funcionar. Essa é a integral que devemos resolver, podemos dividila nessas N partes, e esse são os N trechos
+        de codigo que implementam essas N partes. Porém eu não tria a capacidade de implementar cada um desses N trechos de codigo sozinho.
+        Porque eu não faço ideia de de como essas coisas realmente funcionam. Livros como os de Sergey Kosarevsky são ainda piores, são apenas
+        livros de receitas, que explica superficialmente a teoria, o suficiente para saber onde copiar e colar cada parte do codigo. Já o livro
+        de Matt Pharr, é tão denso matematicamente que eu mal consigo entender como saimos das equações originais do PBR offline e chegamos nas
+        versões aproximadas do PBR em tempo real.
+    </p>
+
+    <p>
+        O que quero trazer aqui, é uma abordagem mais aprofundada e visual de como o PBR funciona, onde partiremos dos conseitos fisicos,
+        os definiremos matematicamente e cregaremos por fim a equação da renderização, e não uma abordagem de cima para baixo, onde vemos
+        está equação super complexa, e aprendemos a implementa-la por partes. Quero mostrar a vocês, qual foi a metodologia que usei para
+        entender está area que considero tão complexa dentro do campo da computação grafica, e, ao final desse capitulo, teremos todos os
+        shader nessarios para gerar imagens renderizadas com PBR assim como suas definições matematicas.
+    </p>
+
+    <figure class="image-container">
+        <img src="img/Graphs/Ray reflection.png" alt="">
+        <figcaption>Figura 2 - Dispeção da luz com materias de diferentes niveis de rugosidade</figcaption>
+    </figure>
+
+    <p>
+        Inicialmente iremos partir da propriedade fisica que gerou toda essa confusão na minha cabeça, algo que parecia tão simples,
+        e no final não se mostrou tão simples assim. A primeira vez que tive contato com essa propriedade fisica em renderização foi
+        quando eu li o livro Ray Tracing In One Weekend, de Peter Shirley, Trevor D Black e Steve Hollasch. Este livro ensina como escrever
+        um renderizador ray tracing em pouquissimas linhas e de forma muito simples de entender. Materiais não rugosos refletem a luz perfeitamente
+        em relação a normal a superficie enquanto materiais rugosos espalham a luz em uma direção aleatoria devido a não uniformidade de suas faces.
+        É muito facil de entender, uma vez que um raio de luz chega a superficie, calculamos o valor da iluminação naquele ponto usando a
+        normal e a direção de entrada do raio de luz (como é feito em sistemas de iluminação mais simples) e em seguida refletimos esse
+        raio de luz em uma direção aleatoria.
+    </p>
+    
+    <p>
+        É bem simples fazer isso, precisamos gerar um vetor unitario para representar uma direção aleatoria. Podemos fazer isso simplemente
+        gerando 3 valores de float ou double aleatorios no intervalo de [0, 1] e usa-los como componentes de um vetor. Esse vetor não
+        estaria contido dentro de uma esfera unitaria, por gerar esses valors pode nos dar qualquer valor randomico dentro de um cubo, não de
+        uma esfera. Mas para resolver isso basta normaliza-lós então temos um direção aleatoria normalizada. Vale lembra que a distribuição
+        não é completamente uniforme devido termo "normalizado um cubo" fazendo que tenhamos mais direções quando vamos em sentidos as
+        quinas do cubo. Isso pode ser ignorado por hora. No trecho de codigo 1, podemos ver isso implementado na primeira função.
+    </p>
+
+    <p>
+        Em seguida ainda temos um problema. Em objetos onde a unica propriedade fisica é a rugosidade, não temos raios de luz que entram
+        para dentro do objeto (gerando o efeito chamado subsurface scattering, que tambem será abordado em um determinado momento), logo
+        precisamos discartar todos os raios na direção que aponta para dentro do objeto. Até porque seria um dispedicio calcular raios
+        de luz que não contribuem com o efeito de iluminação que estamos buscando. Imagine que que um objeto é criado por pequenas faces
+        quando visto muito de perto como visto na Figura 2. Quando vamos calcular a iluminação de um determinado ponto em um objeto,
+        estaremos analizado as pripriedades dessas micro-faces, onde cada uma delas pode ser representada por um plano. Esse plano
+        tem uma direção normal, e todos dos raios de luz que não entram para dentro do plano, são os raios de luz que possuem até 90º
+        em relação a normal do plano, o que significa que gemos que gerar direções apenas na parte superior da esfera em relação a normal.
+        Metade de uma esfera se chama hemisferio, então quando vc ler em um texto sobre integrar o hemisferio, estamos falado sobre as
+        direções onde a luz reflete, apenas na parte superior dessa esfera, onde os raios de luz realmente importam até o momento. Não se
+        preocupe ainda com a parte do "integração". Com objetos não rugosos não temos um problema aqui, apenas reflita a luz de forma
+        simetrica a normal como vista na Figura 2.
+    </p>
+
+    <pre><code class="language-glsl" data-src="random_on_hemisphere.cpp"></code></pre>
+
+    <p>
+        Essa abordagem possui um problema muito maior do que a distribuição não ser totalmente uniforme. Essa abordagem permite apenas que
+        objetos sejam não rugosos ou rugos. O grande problema aqui é que nem todos os objetos na natureza são apenas 100% rugosos ou 0%
+        rugosos, temos todo uma gama de objetos que podem ser representados com niveis de rugosidade intermediarios. Então precisamos de
+        anostrar direções aleatorias no hemisferio que vão desde uma distribuição completamente aleatoria, até uma distribuição em uma
+        unica direção em objetos completamente reflexivos. Veja o exemplo da Figura 3, a medida que que o valor de rugosidade diminui,
+        as amostras se tornam mais espalhadas, a meidade que a rugosidade diminui, elas tendem a ser amostradas em uma direção. Isso
+        se aproxima bastante do comportamento que queremos e que foi visto na Figura 2. Gerar essas amostras aleatorias concentradas
+        em determinas areas de acordo com uma propriedade fisica, se chama Amostragem por importancia, outro conceito importante na
+        renderização PBR, vamos amostrar apenas as direções que realmente importam dado uma caracteristica fisica, ao inves de amostrar
+        direções aleatorias e depois discartar direções que não precisamos.
+    </p>
+
+    <figure class="image-container">
+        <img src="img/Graphs/GGX Samples - extends.png" alt="">
+        <figcaption>Figura 3 - Amostragem de hemisferio</figcaption>
+    </figure>
+
+    <p>
+        E ai que a merda começa, no trecho de codigo 2, podemos ver uma amostragem por importancia. Nesse ponto todas as explicações
+        que encontrei ja eram um pouco nebulosas, a maioria dos recursos só dizem que precisamos amostras direções da luz em materiais
+        como diversos tipos de rugosidade, nos jogam um codigo e e tudo funciona. Faz sentido, mas não me sinto satisfeito com uma
+        explicação que acabam aqui. Acredito que as mesmas sejam tão sintetizadas pois estamos apenas na ponta do Iceberg PBR, então
+        ainda teremos um longa jornada pela frente.
+    </p>
+
+    <pre><code class="language-glsl" data-src="importance_sampling.glsl"></code></pre>
+    
+    <p>
+        O codigo em questão é dividido em duas funções random que gera um numero aleatorio e importanceSample_GGX que faz a amostragem das
+        direções em que a luz tem a maior probabilidade de ser refletida.
+    </p>
+    
+    <pre><code class="language-cpp" data-src="main.cpp"></code></pre>
+
+    <script>
+        document.querySelectorAll('code[data-src]').forEach(code => {
+            fetch("code-snippets/" + code.dataset.src)
+                .then(res => res.text())
+                .then(text => {
+                code.textContent = text;
+                Prism.highlightElement(code);
+            });
+        });
+    </script>
+</body>
+</html>

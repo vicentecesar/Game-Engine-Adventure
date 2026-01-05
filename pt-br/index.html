@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Egine Adventure</title>
+    <link rel="stylesheet" href="../css/style.css"/>
+    <link rel="stylesheet" href="../css/prism.css"/>
+    <script src="../js/prism.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html"> Game Engine Adventure</a>
+            <ul class="menu">
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Livros</a></li>
+                <li><a href="#">Ferramentas</a></li>
+                <li><a href="#">Sobre</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="content">
+        <img src="../img/logo-full.png" style="width: 100%;">
+
+        <h2>Como começar</h2>
+        <div class="posts">
+            <a href="compiling-game-engine.html" class="post-link">
+                <article class="post">
+                    <img src="../img/blog/thumbnail/compile.png" alt="">
+                    <h3>Compilando a Game Engine</h3>
+                </article>
+            </a>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/features.png" alt="">
+                <h3>Funcionalidades engine</h3>
+            </article>
+        </div>
+        <h2>Dev Log</h2>
+        <div class="posts">
+            <article class="post">
+                <img src="../img/blog/thumbnail/joysitck.png" alt="">
+                <h3>Joysitck</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/rope_simulation.png" alt="">
+                <h3>Simulando cordas</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/quadtree.png" alt="">
+                <h3>Quadtree</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/splines.png" alt="">
+                <h3>Splines</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/pbr.png" alt="">
+                <h3>Renderização baseada em fisica</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/boids.jpg" alt="">
+                <h3>Boids</h3>
+            </article>
+
+            <article class="post">
+                <img src="../img/blog/thumbnail/poisson_disc.png" alt="">
+                <h3>Poisson Disc</h3>
+            </article>
+        </div>
+    </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Game Engine Adventure</h3>
+                <p>Estudos, devlogs e documentação sobre desenvolvimento de engines.</p>
+            </div>
+
+            <div class="footer-links">
+                <h4>Links</h4>
+                <a href="#">GitHub</a>
+                <a href="#">YouTube</a>
+                <a href="#">Email</a>
+            </div>
+
+            <div class="footer-links">
+                <h4>Contato</h4>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Game Engine Adventure — Todos os direitos reservados
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('code[data-src]').forEach(code => {
+            fetch("code-snippets/" + code.dataset.src)
+                .then(res => res.text())
+                .then(text => {
+                code.textContent = text;
+                Prism.highlightElement(code);
+            });
+        });
+    </script>
+</body>
+</html>

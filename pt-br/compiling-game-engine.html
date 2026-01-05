@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Egine Adventure</title>
+    <link rel="stylesheet" href="../css/style.css"/>
+    <link rel="stylesheet" href="../css/prism.css"/>
+    <script src="../js/prism.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html"> Game Engine Adventure</a>
+            <ul class="menu">
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Livros</a></li>
+                <li><a href="#">Ferramentas</a></li>
+                <li><a href="#">Sobre</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="content">
+        <img src="../img/logo-full.png" style="width: 100%;">
+        <h2>Um pequeno disclamer sobre o licencimento do codigo</h2>
+        
+        <p>
+            Essa pagina é dedicada aos desenvolvedores da DRV Game Engine. Se você não é um dos desenvolvedores
+            da DRV Game Engine, provavelmente não terá acesso ao repositorio citado aqui. Porém, caso tenha
+            interesse em conhecer a nivel de codigo o projeto ou colaborar, você pode entrar encontato através do
+            nosso <a href="https://www.instagram.com/drv.engine/">instagram</a>. Até o momento esse é um projeto pessoal,
+            onde estou desenvolvendo uma game engine para criar meu jogo dos sonhos. O codigo não está
+            licencidado sobre nenhuma licença no momento, então, caso queira usa-lo, entre em contato comigo
+            para que possamos conversar sobre.
+        </p>
+
+        <h2>Compilando a DRV Game Engine</h2>
+
+        <p>
+            Esse manual explica como compilar a DRV Engine nas diversas plataformas suportadas,
+            assim como alguns conceitos de como funciona o sistema de compilação escolhido.
+        </p>
+
+        <h2>VS Code</h2>
+
+        <p>
+            A ferramenta de desenvolvimento padrão escolhido para o desenvolvimento é o VS Code.
+            Você pode baixa-lo e instala-lo a partir de <a href="https://code.visualstudio.com/download">https://code.visualstudio.com/download</a>.
+            Para usa-lo é muito simples. Basta baixar a extenção c++ para VS Code.
+            O arquivo c_cpp_properties.json já está configurado corretamente para o projeto.
+            Apenas selecione no canto inferior direito qual das configurações deseja usar. Por exemplo,
+            caso deseje trabalhar com Windows no modo debug, selecione "Windows (Debug)" para que o
+            intellisense possa mostrar a sintaxy correta, como pode ser visto na imagem. É recomendado
+            que instale todas as extenções sugeridas em "extensions.json" para melhor desenvolvimento.
+            Ao iniciar o VS Code pela primeira vez, o mesmo ira recomendar que instale as extenções contidas
+            em "extensions.json".
+        </p>
+
+            <figure class="image-container" style="width: 90%; margin: 0 auto;">
+            <img src="../img/blog/compiling_game_engine/vs_code_configuration.png" alt="">
+            <figcaption>Figura 1 - Configuração do intellisense</figcaption>
+        </figure>
+
+        <p>
+            Observação: caso esteja com um arquivo .md aberto, a opção de cofirugração não irá aparecer no
+            canto inferior direito. Apenas abra um arquivo .c, .h,.cpp ou .hpp para que elas sejam exibidas
+            em seu VS Code.
+        </p>
+    </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Game Engine Adventure</h3>
+                <p>Estudos, devlogs e documentação sobre desenvolvimento de engines.</p>
+            </div>
+
+            <div class="footer-links">
+                <h4>Links</h4>
+                <a href="#">GitHub</a>
+                <a href="#">YouTube</a>
+                <a href="#">Email</a>
+            </div>
+
+            <div class="footer-links">
+                <h4>Contato</h4>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Game Engine Adventure — Todos os direitos reservados
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('code[data-src]').forEach(code => {
+            fetch("code-snippets/" + code.dataset.src)
+                .then(res => res.text())
+                .then(text => {
+                code.textContent = text;
+                Prism.highlightElement(code);
+            });
+        });
+    </script>
+</body>
+</html>

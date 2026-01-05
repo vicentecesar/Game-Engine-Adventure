@@ -9,13 +9,26 @@
     <script src="js/prism.js"></script>
 </head>
 <body>
-    <div class="page">
-        <img src="img/logo-full.png" style="width: 100%;">
-        <div class="language">
-            <a href="pt-br/index.html">Português</a>
-            <a href="en/index.html">English</a>
-        </div>
+    <header>
+        <nav>
+            <a href="index.html"> Game Engine Adventure</a>
+            <ul class="menu">
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Livros</a></li>
+                <li><a href="#">Ferramentas</a></li>
+                <li><a href="#">Sobre</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <img src="img/logo-full.png" style="width: 100%;">
+
+    <div class="language">
+        <a href="#">Português</a>
+        <a href="#">English</a>
     </div>
+
     <script>
         document.querySelectorAll('code[data-src]').forEach(code => {
             fetch("code-snippets/" + code.dataset.src)
