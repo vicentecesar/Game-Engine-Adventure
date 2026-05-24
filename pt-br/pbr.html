@@ -4,28 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Egine Adventure</title>
-    <link rel="stylesheet" href="css/style.css"/>
-    <link rel="stylesheet" href="css/prism.css"/>
-    <script src="js/prism.js"></script>
+    <link rel="stylesheet" href="../css/style.css"/>
+    <link rel="stylesheet" href="../css/prism.css"/>
+    <script src="../js/prism.js"></script>
 </head>
 <body>
     <header>
         <nav>
             <a href="index.html"> Game Engine Adventure</a>
-        </nav>
-        <div>
-            <ul>
-                <li><a>Inicio</a></li>
-                <li><a>Mapa</a></li>
-                <li><a>Livros</a></li>
-                <li><a>Ferramentas</a></li>
-                <li><a>Sobre</a></li>
+            <ul class="menu">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Livros</a></li>
+                <li><a href="#">Ferramentas</a></li>
+                <li><a href="#">Sobre</a></li>
             </ul>
-            <button>Light</button>
-        </div>
+        </nav>
     </header>
     
-    <h1>Capitulo X - Physically Based Rendering, um mergulho profundo</h1>
+    <h1>Physically Based Rendering, um mergulho profundo</h1>
     <p>
         Physically Based Rendering, normalmente representado com a sigla PBR, em português, renderização baseada em física é uma forma de
         renderizar objetos, onde usamos parâmetros fisicos para descrever os materiais de cada objeto. O que significa que, dado uma
@@ -38,7 +35,7 @@
     </p>
 
     <figure class="image-container">
-        <img src="img/Graphs/dielectric_roughness.png" alt="">
+        <img src="../img/Graphs/dielectric_roughness.png" alt="">
         <figcaption>Figura 1 - Variação da iluminação ao variar a rugosidade de 0 até 1</figcaption>
     </figure>
 
@@ -78,7 +75,7 @@
     </p>
 
     <figure class="image-container">
-        <img src="img/Graphs/Ray reflection.png" alt="">
+        <img style="background-color: gray;" src="../img/Graphs/Ray reflection.png" alt="">
         <figcaption>Figura 2 - Dispeção da luz com materias de diferentes niveis de rugosidade</figcaption>
     </figure>
 
@@ -133,7 +130,7 @@
     </p>
 
     <figure class="image-container">
-        <img src="img/Graphs/GGX Samples - extends.png" alt="">
+        <img src="../img/Graphs/GGX Samples - extends.png" alt="">
         <figcaption>Figura 3 - Amostragem de hemisferio</figcaption>
     </figure>
 
@@ -156,7 +153,7 @@
 
     <script>
         document.querySelectorAll('code[data-src]').forEach(code => {
-            fetch("code-snippets/" + code.dataset.src)
+            fetch("../code-snippets/" + code.dataset.src)
                 .then(res => res.text())
                 .then(text => {
                 code.textContent = text;
