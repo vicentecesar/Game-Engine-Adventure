@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Egine Adventure</title>
+    <link rel="stylesheet" href="../css/style.css"/>
+    <link rel="stylesheet" href="../css/prism.css"/>
+    <script src="../js/prism.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="index.html">Game Engine Adventure</a>
+            <ul class="menu">
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Livros</a></li>
+                <li><a href="#">Ferramentas</a></li>
+                <li><a href="#">Sobre</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="content">
+        <h1>Material System</h1>
+        <p>
+            A DRV Engine tem como objetivo fornecer um sistema de materiais bastante complexo, que permita criar visuais estilizados que são possiveis
+            com outros moteres de renderização do o Blender. Isso significa que o sistema de materiais deve fornecer uma biblioteca de codigos para criar
+            ruidos, amostrar texturas, entre outras funcionalidades, tato de maneira visual quanto via codigo. Essa pagina descreve como o sistema de materiais
+            foi arquitetado para poder forncer toda a flexibilidade pretendida.
+        </p>
+
+        <h2>Shaders compilados</h2>
+        <p>
+            Na DRV Game Engine existem duas formas de se criar materiais, uma delas é usando arquivos de shader GLSL, e a outra usando shader nodes. Em ambas
+            as versões, todas as funcionalidades estão disponiveis, ou seja, caso você use um node de ruido com a programação visual, o mesmo node estará
+            disponivel através uma função, em uma diretiva include para seu codigo. 
+        </p>
+        <p>
+            Um material é composto de dois fatores. Os dados de entrada e o codigo fonte dos shaders, podendo ter origem em um shader node ou um arquivo de
+            codigo GLSL. Os dados de entrada do shader podem ser dados globais ou por instancia. Isso significa, que cada objeto desenhada no tela pode ter
+            dados que são exclusivos para ele, quanto ter dados que são em comum para todos os objetos. Por exemplo, um shader PBR possui como entrada mapas
+            de iluminação difusa e tabelas de pesquisa, que são sempre as memas para todos os objetos. Por outro lado, cada objeto deve ter valores unicos
+            de textura albedo, normalmap entre outros atributos da superficie. Alem dos atributos locais e globais da engine, os materiais possuem uma entrada de dados padrão da engine. Por exemplo, lampadas, cameras, tempo
+            decorrido podem ser solicitados e a game engine colocara esses valores em uniforme buffer de entrada para todas as chamadas do shader.
+        </p>
+        <p>
+            Dado essas informações, podemos dividir nossos dados em 3 partes, a primeira organizamos dentro de uma estrutura de dados chamada PerFrameData:
+        </p>
+
+        <pre><code class="language-cpp" data-src="per_frame_data.cpp"></code></pre>
+
+        <p>
+            Pode parecer estranho a primeira vista, mas temos apenas uma matrix de projeção de luz, por temos suporte a apenas um mapa de sombra no
+            momento que é usado para mapeamento de sobras. Multiplos mapas de sobra podem ser suprotados, mas devido 
+        </p>
+
+        <p>
+            Uma dos maiores desafios encontrados, é como definir as variaveis de entrada de um shader dado um material. Se trabalharmos com shader nodes, esse ponto
+            é mais simples, uma vez que definimos o codigo fonte do shader apos a montagem dos nodelos, logo, sabemos todos os uniformes que iremos gerar, e podemos
+            preenche-los, porem, se tivermos um arquivo de shader glsl ou sprv compilado, a unica forma de sabemos quais a entradas e saidas de um shader, é fazendo
+            o parser do condigo fonte do shader ou usando reflection em vulkan.
+        </p>
+
+        <p>
+            Dito isso, nosso sistema de materias, sempre iremos compilar os shaders, seja eles gerados atravez de nodes ou de arquivos glsl, usar reflection,
+            que esta disponivel na SDK do vulkan, e condigurar os pipelines vulkan apartir das entradas definidas pela reflection.
+        </p>
+    </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Game Engine Adventure</h3>
+                <p>Estudos, devlogs e documentação sobre desenvolvimento de engines.</p>
+            </div>
+
+            <div class="footer-links">
+                <h4>Links</h4>
+                <a href="https://github.com/vicentecesar">GitHub</a>
+                <a href="https://www.youtube.com/@drv.engine">YouTube</a>
+            </div>
+
+            <div class="footer-links">
+                <h4>Contato</h4>
+                <a href="https://www.instagram.com/drv.engine/">Instagram</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            © 2026 Game Engine Adventure — Todos os direitos reservados
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('code[data-src]').forEach(code => {
+            fetch("../code-snippets/" + code.dataset.src)
+                .then(res => res.text())
+                .then(text => {
+                code.textContent = text;
+                Prism.highlightElement(code);
+            });
+        });
+    </script>
+</body>
+</html>
