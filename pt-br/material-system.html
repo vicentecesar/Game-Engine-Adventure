@@ -42,8 +42,9 @@
             codigo GLSL. Os dados de entrada do shader podem ser dados globais ou por instancia. Isso significa, que cada objeto desenhada no tela pode ter
             dados que são exclusivos para ele, quanto ter dados que são em comum para todos os objetos. Por exemplo, um shader PBR possui como entrada mapas
             de iluminação difusa e tabelas de pesquisa, que são sempre as memas para todos os objetos. Por outro lado, cada objeto deve ter valores unicos
-            de textura albedo, normalmap entre outros atributos da superficie. Alem dos atributos locais e globais da engine, os materiais possuem uma entrada de dados padrão da engine. Por exemplo, lampadas, cameras, tempo
-            decorrido podem ser solicitados e a game engine colocara esses valores em uniforme buffer de entrada para todas as chamadas do shader.
+            de textura albedo, normalmap entre outros atributos da superficie. Alem dos atributos locais e globais da engine, os materiais possuem uma entrada
+            de dados padrão da engine. Por exemplo, lampadas, cameras, tempo decorrido podem ser solicitados e a game engine colocara esses valores em uniforme
+            buffer de entrada para todas as chamadas do shader.
         </p>
         <p>
             Dado essas informações, podemos dividir nossos dados em 3 partes, a primeira organizamos dentro de uma estrutura de dados chamada PerFrameData:
@@ -52,8 +53,119 @@
         <pre><code class="language-cpp" data-src="per_frame_data.cpp"></code></pre>
 
         <p>
-            Pode parecer estranho a primeira vista, mas temos apenas uma matrix de projeção de luz, por temos suporte a apenas um mapa de sombra no
-            momento que é usado para mapeamento de sobras. Multiplos mapas de sobra podem ser suprotados, mas devido 
+            Vale notar, que se quisermos obter a projeção para varios shadowmaps, devemos criar arrays de tamanho fixo como mostrado na
+            segunda definição da estrutura, uma vez que não é possivel ter ponteiros apontando para memoria de tamanho variado na GPU.
+            Mapas de sobra são caros por terem que renderizar muitas vezes a mesma cena, principalmente para luzes pontuais. Logo,
+            sabemos que não havera necessidade de muitos shadowmaps, sendo eles de 4 a 8 mapas normalmente. Em alguma aplicações,
+            atlas shadowmaps e CSM (Cascade shadow map) são usados, permitindo um numero maior de fontes de luz que geram sobras, a um
+            custo menor de memoria, mas ainda com o alto de renderização. 
+        </p>
+
+        <pre><code class="language-cpp" data-src="per_frame_data_v2.cpp"></code></pre>
+
+        <p>
+            Para obter esses dados na GPU existem duas formas. A primeira, é adicionando um uniforme que contenha a struct como desejada.
+            Ao compilar o shader, a game engine fara a reflection e procuraram por um uniforme chamado perFrameData, que normalmente estará
+            no binding = 0, mas não necessariamente, e preenchera os campos. Para poupar memoria, não teremos um buffer com uma coleção de matrizes
+            para cada objeto somente como os atributos desejados. Como temos uma pequena quatia de dados, todos eles serão enviados para todos os
+            shader, ou seja, o usuario não tem a opção de não declarar inverseLightProjectionView caso seu shader não gere sobrar, mas não é um
+            problema de performance no momento, pelo contrario, aparente ser uma escolha mais otimizada um pequeno blob de memoria ao lugar
+            de um conjunto de dos para cada malha onde varios deles podem acabar se repetindo diversas vezes.
+        </p>
+
+        <pre><code class="language-glsl" data-src="per_frame_data.glsl"></code></pre>
+
+        <p>
+            Para evitar confuzões, um include é fornecido para dar acesso ao dados, apenas use:
+        </p>
+
+        <pre><code class="language-glsl" data-src="per_frame_data_v2.glsl"></code></pre>
+
+        <p>
+            Apesar do include ser opicional e so os shaders que os definirem irão ter seus dados "bindados", não vejo em que momento
+            o usuario não iria querer receber tais dados, pontando, sempre os inclua. 
+        </p>
+
+        <p>
+            O proximo ponto a ser analizado é a parte do material para o shader de vertices. Nesse ponto possuimos tres situações.
+            Chamada de desenho simples, chamada de desenho indireta e desenho intanciado. Na primeira, cada objeto possui sua propria
+            chamada de desenho, na segunda, um buffer dizendo quais objetos devem ser desenhado é enviado para GPU, e na terceira,
+            um mesmo objeto é desenhando um numero determinado de vezes, e para cada chamada de desenho, temos um id que nos permite
+            obter os dados para a instancia especifica.
+        </p>
+
+        <p>
+            Para todos os casos, temos as matrizes de worldTransform que dizem como o objeto deve ser tranformado em seu espaço global. A logica aqui é bem simples, cada modelo,
+            quando desenhado, irá acessar sua matriz de transformação quando necessario, em um indice de um array continuo que possui as tranformações de todos os objetos em
+            cena na hora de ser desenhado. A imagem abaixo mostra como isso se parece. 
+        </p>
+
+        <img src="../img/material_system/model_matrices.svg" alt="Array de shadow maps">
+
+        <p>
+            Para começar com algo simples, vamos analizar a chamadas de desenho comum. Primeiramente, temos que entender que no vulkan, não existe os uniformes tradicionais
+            onde definimos seus valores para cada chamada de desenho fazendo uma loop onde definimos os valores dos uniformes e em seguida desenhamos o objeto, e assim
+            sucessivamente até que todos os objetos sejam desenhados. No vulkan, teremos um uniforme buffer, onde os dados de tranformação de todos os modelos serão armazenados,
+            e durante a chamada de desenho, apenas informaremos o indice, dentro do uniform buffer o quão está o dado para o objeto sendo desenhado. Sendo assim, não a necessidade
+            de indexar a matrix de dados dentro do shader, apenas declarar um uniforme da seguinte forma:
+        </p>
+
+        <pre><code class="language-glsl" data-src="mesh_data.glsl"></code></pre>
+
+        <p>
+            Mas como sempre, para evitar confuzões e manter um padrão, podemos apenas usar uma diretiva include para buscar os dados:
+        </p>
+
+        <pre><code class="language-glsl" data-src="mesh_data_v2.glsl"></code></pre>
+
+        <p>
+            Para desenhos instanciados a coisa muda um pouco de forma, não temos mais apenas um uniforme que ja possui o valor o qual o objeto deve acessar, receberemos uma
+            matriz de tamanho indefinido onde o shader deve acessar o indice desejado para determinado elemento.
+        </p>
+
+        <pre><code class="language-glsl" data-src="instanced_mesh_data.glsl"></code></pre>
+
+        <p>
+            Como se pode ver, no shader em questão eu usei diretamente posições para os modelos ao inves de uma matriz de tranformação 4x4 como mormalmente é feito.
+            Isso acontece devido a um dos grandes gargalos da programação grafica ser a velocidade de acesso a memoria, logo, se um shader precisa apenas da posição do
+            objeto, a velocidade de desenho aumenta, uma vez que muito menos memoria é lida no shader.
+        </p>
+
+        <p>
+            Para exemplificar isso, vamos analizar de onde esse shader for extradio. Originalmente, esse trecho de codigo pertence a um shader de renderização de grama.
+            Para esse shader, a game engine usava uma malha 3D como base para distribuição da grama. Nesse exemplo, a engine usava um algoritimo chamado "Poisson Disc",
+            capas de gerar amostras aleatoriamente sobre uma malha 3D, sem que haja sobreposição entre os objetos, dado um raio de distancia minimo aceitavel. Esse
+            algoritimo é pesado demais para ser executado a cada frame na GPU. Dito isso, geramos uma array de matrizes de tranformação que diz onde cada grama deve ser
+            colocada.
+        </p>
+
+        <p>
+            Nessa cena tinhamos 200 mil folhas de gramas individuais sendo animadas, o que resultada em aproximadamente 12 MB de dados, apenas para as gramas, sendo indexados
+            no shader a cada frame. Uma vez que precisamos so da posição, podemos armazenar o dados em uma matriz de vec4 (para manter o olhimamento de memoria correto) e assim
+            gastar paroximadamente 3MB de memoria, tornando mais eficiente o acesso dentro dos shaders. Uma vez, esclarecido isso, o usuario pode tanto solicitar a matrix de
+            transformação completa, quanto apenas os componentes individuais desejando, e deixar com que a game engine use reflection, para fazer binding no buffer correto.
+        </p>
+
+        <p>
+            Outro ponto importante a ser tratado aqui, são os Scene Graphs. Muitas vezes foi um pouco confuso para mim entender como eles entraria aqui, então considero
+            importante, mesmo que em um sistema de materiais, explicar como o Scene Graph interagem como os materiais, uma vez que eles são shaders controlados diretamente
+            pelo renderizador. Supomos que tenhamos o seguinte grafo de cena:
+        </p>
+
+        <img style="background-color: #2C2C2C;" src="../img/material_system/scene_graph.svg" alt="Array de shadow maps">
+
+        <p>
+            Uma solução é iterar sobre cada no, so pai para os filhos, calcular a posição no mundo do filho em relação ao pai, enviar a matriz para o shader e desenhar. Como
+            cada nó pode ter uma Geometria, e cada Geometria pode ter um material diferente, nos temos que dar Binding no shader (ou no pipeline, no caso do vulkan) para cada
+            objeto que formos desenhar, o que é muito custoso. Você poderia verificar se o proximo objeto desenhando usa o mesmo shader do anterior para evitar retrabalho,
+            mas isso ainda pode gerar muitas trocas de contexto. Alem de que, calcular as matrizes de transformação enquanto se desenha a cena, gera muitas falhas de cache, uma
+            vez que acessaremos muitos dados ao memso tempo, de tarefas diferente, para chegar ao nosso resultado final.
+        </p>
+
+        <p>
+            Temos dois problemas enormes, que podem ser concertados com uma mesma solução, a programação orientedada a dados. Tudo é sobre como nos organizamos os dados, e o
+            se da muito bem como esse tipo de programação. Então vamos tratar um problema de cada vez. Primeiro como o Scene Graph sera resolvido e enviado para GPU e o segudno
+            como como as malhas vao ser enviadas para GPU, de forma que cada pipeline tenha sua função Bind chamada apenas uma vez, nos dado o maximo de eficientencia.
         </p>
 
         <p>
