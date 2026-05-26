@@ -97,7 +97,7 @@
         <p>
             Para todos os casos, temos as matrizes de worldTransform que dizem como o objeto deve ser tranformado em seu espaço global. A logica aqui é bem simples, cada modelo,
             quando desenhado, irá acessar sua matriz de transformação quando necessario, em um indice de um array continuo que possui as tranformações de todos os objetos em
-            cena na hora de ser desenhado. A imagem abaixo mostra como isso se parece. 
+            cena na hora de ser desenhado. A imagem abaixo mostra como isso se parece.
         </p>
 
         <img src="../img/material_system/model_matrices.svg" alt="Array de shadow maps">
@@ -167,6 +167,14 @@
             se da muito bem como esse tipo de programação. Então vamos tratar um problema de cada vez. Primeiro como o Scene Graph sera resolvido e enviado para GPU e o segudno
             como como as malhas vao ser enviadas para GPU, de forma que cada pipeline tenha sua função Bind chamada apenas uma vez, nos dado o maximo de eficientencia.
         </p>
+
+        <p>
+            Para resolver o problema do Scene Graph usaremos um sistema de ECS (Entity Component System). O ECS naturalmente mapeia entidades com ID's unicos para valores em uma
+            matriz continua de dados, o que parece uma caminho bem natual para nós aqui. O ECS nada mais é que um aprimoramento de dados de uma outra estrutura de dados chamada
+            Sparse Set.
+        </p>
+
+        <img style="background-color: #2C2C2C;" src="../img/material_system/sparse_set_mapping.svg" alt="Array de shadow maps">
 
         <p>
             Uma dos maiores desafios encontrados, é como definir as variaveis de entrada de um shader dado um material. Se trabalharmos com shader nodes, esse ponto
