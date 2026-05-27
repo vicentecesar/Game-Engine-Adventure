@@ -31,6 +31,14 @@
             foi arquitetado para poder forncer toda a flexibilidade pretendida.
         </p>
 
+        <h2>Pré-requisitos</h2>
+
+        <ul>
+            <li>Sparse Set</li>
+            <li>ECS</li>
+            <li>Vulkan</li>
+        </ul>
+
         <h2>Shaders compilados</h2>
         <p>
             Na DRV Game Engine existem duas formas de se criar materiais, uma delas é usando arquivos de shader GLSL, e a outra usando shader nodes. Em ambas
@@ -171,10 +179,41 @@
         <p>
             Para resolver o problema do Scene Graph usaremos um sistema de ECS (Entity Component System). O ECS naturalmente mapeia entidades com ID's unicos para valores em uma
             matriz continua de dados, o que parece uma caminho bem natual para nós aqui. O ECS nada mais é que um aprimoramento de dados de uma outra estrutura de dados chamada
-            Sparse Set. O conceito aqui é bem simples, apesar de eu ter visto muitas vezes as pessoas usarem os sparse sets por motivos errados.
+            Sparse Set. O conceito aqui é bem simples, apesar de eu ter visto muitas vezes as pessoas usarem os sparse sets por motivos errados. Imagine que tenhamos objetos em
+            um Scene Graph, esses objetos pode ter ou não uma Mesh e podem ter ou não um Material. Nos poderiamos manter instacia desses objetos dentro do Scene Graph, mas
+            em seguida teriamos que gerar um array plano de matrizes de tranformação para que as mesmas possam ser enviadas para nosso shader.
+        </p>
+
+        <p>
+            O primeiro ponto em que o Sparse Set vai no ajudar, é que todos os elementros estão em um vetor compactado, o que faz com que possamos enviar diretamente para GPU os
+            dados. O segundo ponto é que ele nos da um identificador unico para dados correlacionados. Veja bem, um game objetct pode ter varios elementos associados a ele, uma
+            vez que os elementos estão em varios array planos, precisamos de uma forma de saber qual material pertence a qual mesh? Qual transformação no grafo é de qual objeto?
+            O ECS, que nada mais é que um conjuto de varios esparse sets, nos permite usar o mesmo id de entidade para associar varios components diferentes de um memso objeto.
+            Aqui vale explicar porque acho que as pessoas entendem errado o uso do ECS. Normalmente o ECS é vendido com uma solução de performance que permite iterar muito rapido
+            um conjunto de component. A verdade que iterar componentes em um ECS é um tanto complicado porque muitas vezes exige um nivel de indireção, ou seja, temos que acessar
+            uma matriz sparsa que nos da o indice de uma matriz densa. Se seu unico problema é a performance, apenas armazene seus dados em uma matriz plana, esse nivel de indireção
+            só irá piorar as coisas para você.
         </p>
 
         <img style="background-color: #2C2C2C;" src="../img/material_system/sparse_set_mapping.svg" alt="Array de shadow maps">
+
+        <p>
+            Quando usamos duas matrizes densas para indexar os dados, temos um ECS. Dessa forma, cada objeto pode ter diversos atributos, cada um em sua respectiva matriz de dados.
+            Sendo assim, podemos ter um componente de matrizes de transformação, e um componente de meshs. Enviamos ambas as matrizes para GPU, e usamos a matriz dense[] para saber
+            onde na matriz de dados está a tranformação do objeto no buffer unifome. Por questão de performance mantena os dados ordenados de Mesh e transform. Esse topico pode
+            ser um pouco complexo, logo, escreverei um post separado para que possamos falar sobre Sparse Sets e scene graphs. Essa sessão é apenas para mostrar como esses dados
+            chegam até o shader do material.
+        </p>
+
+        <p>
+            Uma vez que ja entendemos como os dados são armazenados, hora de entender como os materiais funcionam. Os materiais nada mais são que mais uma entrada de dados uniform
+            para o shader.
+        </p>
+
+        <pre><code class="language-glsl" data-src="material.glsl"></code></pre>
+        <pre><code class="language-json" data-src="material.json"></code></pre>
+        <pre><code class="language-glsl" data-src="material_textures.glsl"></code></pre>
+        <pre><code class="language-cpp" data-src="material_cpu.cpp"></code></pre>
 
         <p>
             Uma dos maiores desafios encontrados, é como definir as variaveis de entrada de um shader dado um material. Se trabalharmos com shader nodes, esse ponto

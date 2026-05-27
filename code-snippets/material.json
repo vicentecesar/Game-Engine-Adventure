@@ -1,0 +1,59 @@
+{
+    "material": {
+        "name": "brdf",
+        "material-global": {
+            "irradianceMap": {
+                "cpu-type": "uint32",
+                "gpu-type": "samplerCube",
+                "offset": 0,
+                "value": 0
+            },
+            "radianceMap": {
+                "cpu-type": "uint32",
+                "gpu-type": "samplerCube",
+                "offset": 4,
+                "value": 1
+            },
+            "lut": {
+                "cpu-type": "uint32",
+                "gpu-type": "sampler2D",
+                "offset": 8,
+                "value": 0
+            }
+        },
+        "material-intances": [
+            {
+                "albedo": {
+                    "cpu-type": "Vector4f",
+                    "gpu-type": "vec4",
+                    "offset": 0,
+                    "value": [ 1.0, 1.0, 1.0, 1.0 ]
+                },
+                "metallic": {
+                    "cpu-type": "float32",
+                    "gpu-type": "float",
+                    "offset": 16,
+                    "value": 0.0
+                },
+                "roughness": {
+                    "cpu-type": "float32",
+                    "gpu-type": "float",
+                    "offset": 20,
+                    "value": 1.0
+                },
+                "albedoTexture": {
+                    "cpu-type": "uint32",
+                    "gpu-type": "sampler2D",
+                    "offset": 24,
+                    "value": 1
+                },
+                "normalTexture": {
+                    "cpu-type": "uint32",
+                    "gpu-type": "sampler2D",
+                    "offset": 28,
+                    "value": 4294967295
+                }
+            }
+        ]
+    }
+}
