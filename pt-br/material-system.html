@@ -207,25 +207,69 @@
 
         <p>
             Uma vez que ja entendemos como os dados são armazenados, hora de entender como os materiais funcionam. Os materiais nada mais são que mais uma entrada de dados uniform
-            para o shader.
+            para o shader. A ideia aqui não é muito complicada, dividimos os materiais em duas partes, material por instancia, e material global. O material global possui dados em
+            comum a todoas as instancias de material, por exemplo, no shader abaixo temos um material PBR com propriedades da superfie no material local, e mapas ambientes no global,
+            como ja citado anteriormente. O sistema de reflection sempre buscara por MaterialGlobal e MaterialInstance para descobrir quais propreidades o material deve ter. Qualquer
+            atributo considerado "publico" em seus shaders devem estar nessas estruturas, assim poderá definilos apartir de nossas api's de mataterial.
         </p>
 
         <pre><code class="language-glsl" data-src="material.glsl"></code></pre>
+
+        <p>
+            Um material é composto de duas partes, seu pipeline em conjunto com seus dados de entrada. Os dados de entrada são advindo de um arquivo json que possui uma lista de
+            materiais, cada um com seu nome, dados globais e uma lista de instancias locais. Cada objeto que utilizar o material, terá dados de instancia nessa lista. Isso quer
+            dizer que, varios modelos 3D podem usar o mesmo material, mudando apenas os dados de entrada. Isso pode ser um pouco confuso para quem usa softwares como blender que possui
+            um node de textura e todos objetos que possuem o mesmo matrial utilizam da mesma textura, mas aqui  teremos um distinção clara entre material e instancia de material, sendo
+            um o pipeline (shader e suas configurações) e o outro os dados. Alem disso, e json acompanha alguns dados extras como ofssets de cada atributo na memoria, tipo do dado e
+            tamanho, isso sera necessarioa para definição da API do lado da CPU.
+        </p>
+
         <pre><code class="language-json" data-src="material.json"></code></pre>
+
+        <p>
+            Antes de abordarmos o material do lado da CPU, vamos tambem tratar de como definimos as texturas usados do lado da GPU. Como pode-se ver, os materiais possuem um
+            valor inteiro para as texturas, isso porque as texturas são esposta nos shader como um array, o material deve indexar esse array e amostrar a textura desejada.
+            Isso já se aproxima da abordagem bindless de textura que sera um dos proximos passos a serem implementados em nosso renderizador.
+        </p>
+
         <pre><code class="language-glsl" data-src="material_textures.glsl"></code></pre>
-        <pre><code class="language-cpp" data-src="material_cpu.cpp"></code></pre>
 
         <p>
-            Uma dos maiores desafios encontrados, é como definir as variaveis de entrada de um shader dado um material. Se trabalharmos com shader nodes, esse ponto
-            é mais simples, uma vez que definimos o codigo fonte do shader apos a montagem dos nodelos, logo, sabemos todos os uniformes que iremos gerar, e podemos
-            preenche-los, porem, se tivermos um arquivo de shader glsl ou sprv compilado, a unica forma de sabemos quais a entradas e saidas de um shader, é fazendo
-            o parser do condigo fonte do shader ou usando reflection em vulkan.
+            O lado da CPU é menos complexo do que parece, inicialmente definimos um enum que tem todos os tipos de dados que queremos podem enviar para GPU em nossos materiais.
+            Alem disso definimos uma função que retorna o tamanho do tipo de dado em bytes, assim podemos saber quantos bytes de memoria precisamos copiar para a memoria assim
+            como quanto avançar para definir o proximo dado.
         </p>
 
+        <pre><code class="language-cpp" data-src="material_cpu_p1.cpp"></code></pre>
+
         <p>
-            Dito isso, nosso sistema de materias, sempre iremos compilar os shaders, seja eles gerados atravez de nodes ou de arquivos glsl, usar reflection,
-            que esta disponivel na SDK do vulkan, e condigurar os pipelines vulkan apartir das entradas definidas pela reflection.
+            Por fim o nucleo desse sistema se resume em ter um array plano de memoria que sera enviado para GPU. No nosso exemplo, cada instancia de material possui 32 bytes.
+            Sendo assim, podemos definir um array de N * 32 elementos, e encontrar o material desejado simplemente usando aritimetica de ponteiro. O mesmo pode ser feito para
+            encontrar um campo em um material especifico, usando o atributo offset adivindo do json. Como o json possui tambem o nome do campo, podemos tambem definir um atributo
+            do material pelo sem nome usando a nossa API quando necessario, mas marjoritariamente, esperace que atributos do material sejam definidos apartir de uma UI, que usara
+            diretamente os indices dos atributos na API abaixo.
         </p>
+
+        <pre><code class="language-cpp" data-src="material_cpu_p2.cpp"></code></pre>
+
+        <p>
+            Um sistema complexo de materiais esta se criando aqui, mas gerar todos esses json manumalmente pode ser um grande problema, teriamos que ir ao condigo fonte dos shaders,
+            verificar as estrutudas de dados, obeter o nome de cada campo, sem offsets e assim por diantes. Uma dos maiores desafios encontrados, é como definir as variaveis de
+            entrada de um shader dado um material. Se trabalharmos com shader nodes, ao inves dos shaders compilados, esse ponto é mais simples, uma vez que definimos o codigo
+            fonte do shader apos a montagem dos nodelos, logo, sabemos todos os uniformes que iremos gerar, e podemos preenche-los, porem, se tivermos um arquivo de shader glsl
+            ou sprv compilado, a unica forma de sabemos quais a entradas e saidas de um shader, é fazendo o parser do condigo fonte do shader ou usando reflection em vulkan.
+            Dito isso, nosso sistema de materias, sempre iremos compilar os shaders, seja eles gerados atravez de nodes ou de arquivos glsl, usar reflection, que esta disponivel
+            na SDK do vulkan, e condigurar os pipelines vulkan apartir das entradas definidas pela reflection.
+        </p>
+
+        <h2>Reflection system</h2>
+
+        <p>
+
+        </p>
+
+        <pre><code class="language-cpp" data-src="reflection.cpp"></code></pre>
+
     </div>
     <footer class="footer">
         <div class="footer-content">

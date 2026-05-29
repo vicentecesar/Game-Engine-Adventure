@@ -1,5 +1,5 @@
 {
-    "material": {
+    "materials": [
         "name": "brdf",
         "material-global": {
             "irradianceMap": {
@@ -55,5 +55,5 @@
                 }
             }
         ]
-    }
+    ]
 }
