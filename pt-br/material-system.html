@@ -108,7 +108,10 @@
             cena na hora de ser desenhado. A imagem abaixo mostra como isso se parece.
         </p>
 
-        <img src="../img/material_system/model_matrices.svg" alt="Array de shadow maps">
+        <figure class="image-container">
+            <img style="background-color: #2C2C2C;" src="../img/material_system/model_matrices.svg">
+            <figcaption>Figura 1 - Layout de memoria para matrizes de transformação</figcaption>
+        </figure>
 
         <p>
             Para começar com algo simples, vamos analizar a chamadas de desenho comum. Primeiramente, temos que entender que no vulkan, não existe os uniformes tradicionais
@@ -160,7 +163,10 @@
             pelo renderizador. Supomos que tenhamos o seguinte grafo de cena:
         </p>
 
-        <img style="background-color: #2C2C2C;" src="../img/material_system/scene_graph.svg" alt="Array de shadow maps">
+        <figure class="image-container">
+            <img style="background-color: #2C2C2C;" src="../img/material_system/scene_graph.svg">
+            <figcaption>Figura 2 - Exemplo de Scenegraph ficticio</figcaption>
+        </figure>
 
         <p>
             Uma solução é iterar sobre cada no, so pai para os filhos, calcular a posição no mundo do filho em relação ao pai, enviar a matriz para o shader e desenhar. Como
@@ -195,7 +201,10 @@
             só irá piorar as coisas para você.
         </p>
 
-        <img style="background-color: #2C2C2C;" src="../img/material_system/sparse_set_mapping.svg" alt="Array de shadow maps">
+        <figure class="image-container">
+            <img style="background-color: #2C2C2C;" src="../img/material_system/sparse_set_mapping.svg">
+            <figcaption>Figura 3 - Layout de memoria de uma ECS / Sparse Set multiplo</figcaption>
+        </figure>
 
         <p>
             Quando usamos duas matrizes densas para indexar os dados, temos um ECS. Dessa forma, cada objeto pode ter diversos atributos, cada um em sua respectiva matriz de dados.
@@ -265,10 +274,60 @@
         <h2>Reflection system</h2>
 
         <p>
+            Talvez uma das partes mais importantes desse sistema seja o sistema de reflexão que dado um shader compilado, extrai os dados necessarios para identificarmos suas
+            entradas e saidas. Diferente do OpenGL, o vulkan não possui funcionalidades para tratar codigos de shader, diferente do OpenGL o Vulkan não possui um compilador de
+            shaders, muito menos um sistema de reflexão. Porem, a SDK vulkan vem com muitas bibliotecas interessantes, e uma delas pensada justamente nisso. Se adicionarmos o
+            cabeçalho shaderc.h e spirv_reflect.h e fazer link da biblioteca shaderc_combined.lib, teremos um sistema de compição e reflexão inteiro em nosso executavel.
+        </p>
 
+        <p>
+            Um pequeno declaimer sobre a biblioteca shaderc_combined. Se você olhar os arquivos da sua SDK vulkan, vera que a biblioteca tem mais de 60 MB de tramanho, executando
+            drasticamente o tamanho do seu executavel, porem, essa biblioteca possui muita coisa desnecessaria para o nosso mecanismo, oque a torna muito grande. Mas você não
+            precisa se preocupar com isso, confie nas suas ferramentas de compilação, seu linker fará um bom trabalho. Para um exemplo, minha game engine compilada em modo
+            release tem apenas 3 MB de tamanho.
+        </p>
+
+        <p>
+            O sistema aqui gira em torno da estrutura de dados BinaryShader. Essa estrutura contem um shader binario, seu source e sua reflection, montando a estrutura base
+            para qualquer shader, seja ele carregado da memoria ou gerado via shader nodes. Vamos destrinchar um pouco as coisas. O shader binario possui o fonte dos nodes
+            anexados caso exista, so não estará disponivel caso um shader binario seja carregdo diretamente do binario compilado. Isso é util para publicar seu jogo com
+            sua propria propriedade intelectual. Mas é sempre bom compartilhar informação, mesmo que não entregue seu codigo fonte, não se esqueça.
+        </p>
+
+        <p>
+            Arquivos de texto são terminados em \n então apenas um ponteiro para uma string basta aqui, ja o codigo binario não possui uma maneira segura para determinar o
+            tamanho do buffer de memoria, logo tambem temos campos para o tamanho do binario. Cada um dos shaders, vertices, fragmento, geometria e computação tem fonte, binario e
+            tamanho em bytes. Outros tipos de shader como tecelation, mesh e task não são suportados nem necessarios no momento.
         </p>
 
         <pre><code class="language-cpp" data-src="reflection.cpp"></code></pre>
+
+        <p>
+            Em seguida temos o MaterialBufferLayout, uma estrutura de dados que especifica dos vertices de entrada do shader, por padrão, nosso formato de vertice para modelos
+            3D é dado por Posição, Normal e UV's. Sempre esperamos esse formato para modelos não animados, e um formato Com indice da juntas para podemos animados, isso pode ser
+            verificado nesse campo. Monte seu material de acordo, caso seja usado para um modelo animado ou não animado. Você pode ter duas copias do shader para cada um deles
+            para que ser shader se torne generico o suficiente. Mas cuidado, muitas copias de um shader pode gerar um problema exponencial de possiveis combinações de shader,
+            o que é comum em algumas engines. Aqui, deixamos como responsabilidade do usuario, carregar shaders especificos para cada caso até o momento, e a engine verificara
+            a compatibilidade entre material e modelo atravez da estrutura MaterialBufferLayout. A mesmo poderia gerar automaticamente o shader de vertice adequado, mas como
+            permitimos que o usuario use o shader de vertices personalizado, não me parece interessante aqui.
+        </p>
+
+        <pre><code class="language-glsl" data-src="vertex_format.glsl"></code></pre>
+
+        <p>
+            Por fim a estrturua BindingLayout representa cada campo de bind usado em nosso sistema. Como ja dissemos anteriormente, nosso sistema de materiais usa por padrão
+            6 bindings, perFrameData,  modelData, materialInstanceData, materialGlobalData, textures2D, textures3D. Esse campos estão fixos na struct, mas poderiam ser representados
+            por BindingLayout bidings[6], de acordo com as preferencias de que os implementa. Caso mantenha nossa estrutura tera o trabalho de buscar os bindings e atribuir os campos
+            corretamente no sistema de reflexão, e caso use um array plano, seu renderizador deverar procurar os campos manualmente dentro do array apartir do campo name do binding
+            solicitado.
+        </p>
+
+        <p>
+            Um pequeno aviso, os binginds de tamanhos variaveis só podem existir como o ultimo biding do "set", logo se temos 2 de tamanho variavel textures2D, textures3D, os memos devem
+            estar em sets diferentes, por exemplo set 1 e 2 ou 0 e 1. Não caso usamos os sets 1 e 2, por em casos de renderização instanciada, usamos a ultima posição do set 0 para dados
+            de material por instancia, logo, para que se mantenha um padrão usaremos 1 e 2, até que a abordagem bindless textures seja implementada, por não necessitara de matrizes de
+            tamanho variado.
+        </p>
 
     </div>
     <footer class="footer">

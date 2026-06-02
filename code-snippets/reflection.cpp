@@ -77,12 +77,14 @@ typedef struct BinaryShader {
     int64 geometryShaderBinarySize;
     int64 fragmentShaderBinarySize;
 
-    BindingLayout bindingLayout;
+    MaterialBufferLayout materialBufferLayout;
 
     // Uniformbuffers do material enviados pela engine (perFrameData, modelData)
     // ou pelo usuario (materialInstanceData, materialGlobal)
-    MaterialBufferLayout perFrameData;
-    MaterialBufferLayout modelData;
-    MaterialBufferLayout materialInstanceData;
-    MaterialBufferLayout materialGlobalData;
+    BindingLayout perFrameData;
+    BindingLayout modelData;
+    BindingLayout materialInstanceData;
+    BindingLayout materialGlobalData;
+    BindingLayout textures2D;
+    BindingLayout textures3D;
 } BinaryShader;
