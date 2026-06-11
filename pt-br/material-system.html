@@ -26,9 +26,9 @@
         <h1>Material System</h1>
         <p>
             A DRV Engine tem como objetivo fornecer um sistema de materiais bastante complexo, que permita criar visuais estilizados que são possiveis
-            com outros moteres de renderização do o Blender. Isso significa que o sistema de materiais deve fornecer uma biblioteca de codigos para criar
-            ruidos, amostrar texturas, entre outras funcionalidades, tato de maneira visual quanto via codigo. Essa pagina descreve como o sistema de materiais
-            foi arquitetado para poder forncer toda a flexibilidade pretendida.
+            com outros moteres de renderização como Blender Eevee. Isso significa que o sistema de materiais deve fornecer uma biblioteca de codigos para criar
+            ruidos, amostrar texturas, entre outras funcionalidades, tato de maneira visual com alguma especie de nodes, quanto via codigo. Essa pagina descreve como o sistema de
+            materiais foi arquitetado para poder forncer toda a flexibilidade pretendida.
         </p>
 
         <h2>Pré-requisitos</h2>
@@ -50,19 +50,19 @@
             codigo GLSL. Os dados de entrada do shader podem ser dados globais ou por instancia. Isso significa, que cada objeto desenhada no tela pode ter
             dados que são exclusivos para ele, quanto ter dados que são em comum para todos os objetos. Por exemplo, um shader PBR possui como entrada mapas
             de iluminação difusa e tabelas de pesquisa, que são sempre as memas para todos os objetos. Por outro lado, cada objeto deve ter valores unicos
-            de textura albedo, normalmap entre outros atributos da superficie. Alem dos atributos locais e globais da engine, os materiais possuem uma entrada
-            de dados padrão da engine. Por exemplo, lampadas, cameras, tempo decorrido podem ser solicitados e a game engine colocara esses valores em uniforme
+            de textura albedo, normal map, entre outros atributos da superficie. Alem dos atributos locais e globais da engine, os materiais possuem uma entrada
+            de dados padrão da engine. Por exemplo, lampadas, cameras, tempo decorrido podem ser solicitados e a game engine colocara esses valores em um uniforme
             buffer de entrada para todas as chamadas do shader.
         </p>
         <p>
-            Dado essas informações, podemos dividir nossos dados em 3 partes, a primeira organizamos dentro de uma estrutura de dados chamada PerFrameData:
+            Dado essas informações, a primeira das 3 partes organizamos dentro de uma estrutura de dados chamada PerFrameData:
         </p>
 
         <pre><code class="language-cpp" data-src="per_frame_data.cpp"></code></pre>
 
         <p>
             Vale notar, que se quisermos obter a projeção para varios shadowmaps, devemos criar arrays de tamanho fixo como mostrado na
-            segunda definição da estrutura, uma vez que não é possivel ter ponteiros apontando para memoria de tamanho variado na GPU.
+            segunda versão da estrutura, uma vez que não é possivel ter ponteiros apontando para memoria de tamanho variado na GPU.
             Mapas de sobra são caros por terem que renderizar muitas vezes a mesma cena, principalmente para luzes pontuais. Logo,
             sabemos que não havera necessidade de muitos shadowmaps, sendo eles de 4 a 8 mapas normalmente. Em alguma aplicações,
             atlas shadowmaps e CSM (Cascade shadow map) são usados, permitindo um numero maior de fontes de luz que geram sobras, a um
@@ -74,11 +74,11 @@
         <p>
             Para obter esses dados na GPU existem duas formas. A primeira, é adicionando um uniforme que contenha a struct como desejada.
             Ao compilar o shader, a game engine fara a reflection e procuraram por um uniforme chamado perFrameData, que normalmente estará
-            no binding = 0, mas não necessariamente, e preenchera os campos. Para poupar memoria, não teremos um buffer com uma coleção de matrizes
-            para cada objeto somente como os atributos desejados. Como temos uma pequena quatia de dados, todos eles serão enviados para todos os
-            shader, ou seja, o usuario não tem a opção de não declarar inverseLightProjectionView caso seu shader não gere sobrar, mas não é um
-            problema de performance no momento, pelo contrario, aparente ser uma escolha mais otimizada um pequeno blob de memoria ao lugar
-            de um conjunto de dos para cada malha onde varios deles podem acabar se repetindo diversas vezes.
+            no binding = 0, mas não necessariamente, e preenchera os campos. Para poupar memoria, não teremos um buffer unforme para cada combinação
+            de atributos desejados. Como temos uma pequena quatia de dados, todos eles serão enviados para todos os shader, ou seja, o usuario
+            não tem a opção de não declarar inverseLightProjectionView caso seu shader não gere sobrar, mas não é um problema de performance no momento,
+            pelo contrario, aparente ser uma escolha mais otimizada um pequeno blob de memoria ao lugar de um conjunto de dos para cada malha onde varios
+            deles podem acabar se repetindo diversas vezes.
         </p>
 
         <pre><code class="language-glsl" data-src="per_frame_data.glsl"></code></pre>
@@ -90,7 +90,7 @@
         <pre><code class="language-glsl" data-src="per_frame_data_v2.glsl"></code></pre>
 
         <p>
-            Apesar do include ser opicional e so os shaders que os definirem irão ter seus dados "bindados", não vejo em que momento
+            Apesar do include ser opicional e só os shaders que os definirem irão ter seus dados "bindados", não vejo em que momento
             o usuario não iria querer receber tais dados, pontando, sempre os inclua. 
         </p>
 
