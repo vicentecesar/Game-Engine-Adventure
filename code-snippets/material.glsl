@@ -17,5 +17,5 @@ layout(binding = 3) uniform MaterialGlobalData {
 } materialGlobalData;
 
 layout(binding = 4) uniform MaterialInstanceData {
-    MaterialInstance materialInstace;
+    MaterialInstance materialInstance;
 } materialInstanceData;
